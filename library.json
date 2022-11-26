@@ -1,0 +1,16 @@
+{
+    "name": "AC2",
+    "version": "0.0.1",
+    "description": "AC2 Library for Arduino, ESP8266 & EPS32",
+    "keywords": "Communication",
+    "authors":
+    [
+      {
+        "name": "Douglas Bechthold",
+        "email": "dbechth@gmail.com"
+      }
+    ],
+    "license": "MIT",
+    "frameworks": "*",
+    "platforms": "*"
+  }
