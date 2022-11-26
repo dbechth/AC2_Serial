@@ -1,7 +1,7 @@
-// AC2.h
+// AC2_Serial.h
 
-#ifndef _AC2_h
-#define _AC2_h
+#ifndef _AC2_Serial_h
+#define _AC2_Serial_h
 
 #include <WiFiUdp.h>
 #include <ESP8266WiFi.h>
@@ -10,7 +10,7 @@
 #define ACBufferSize   16
 
 
-class AC2Class
+class AC2_SerialClass
 {
 protected:
     WiFiUDP Udp;
@@ -79,7 +79,7 @@ public:
     ESP8266WebServer webserver;
 };
 
-extern AC2Class AC2;
+extern AC2_SerialClass AC2_Serial;
 
 #endif
 

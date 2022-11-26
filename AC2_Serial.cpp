@@ -1,8 +1,4 @@
-// 
-// 
-// 
-
-#include "AC2.h"
+#include "AC2_Serial.h"
 #include <ArduinoOTA.h>
 #include "index.h" 
 #include "home.h" 
@@ -11,35 +7,18 @@
 unsigned long taskRate;
 unsigned long taskCount;
 
-
-void AC2Index()
-{
-
-	AC2.webserver.send(200, "text/html", MAIN_page);
-}
-
-void AC2Home()
-{
-	AC2.webserver.send(200, "text/html", home_page);
-}
-
-void terminal()
-{
-	AC2.webserver.send(200, "text/html", terminal_page);
-}
-
 void handleTerminal()
 {
 	String tmpBuffer = "";
-	if (AC2.bufferCount != 0)
+	if (AC2_Serial.bufferCount != 0)
 	{
-		for (int i = 0; i < (AC2.bufferCount); i++)
+		for (int i = 0; i < (AC2_Serial.bufferCount); i++)
 		{
-			tmpBuffer += AC2.buffer[i];
+			tmpBuffer += AC2_Serial.buffer[i];
 		}
-		AC2.bufferCount = 0;
+		AC2_Serial.bufferCount = 0;
 	}
-	AC2.webserver.send(200, "text/plain", tmpBuffer);
+	AC2_Serial.webserver.send(200, "text/plain", tmpBuffer);
 }
 
 String BuildJSON(String paramName, String Value)
@@ -49,7 +28,7 @@ String BuildJSON(String paramName, String Value)
 
 void getData()
 {
-	String IOIndex = AC2.webserver.arg("IOIndex");
+	String IOIndex = AC2_Serial.webserver.arg("IOIndex");
 	int idx = 0;
 	if (IOIndex != "")
 	{
@@ -63,7 +42,7 @@ void getData()
 			idx = 0;
 		}
 	}
-	AC2Class::IO tmpIO = AC2.device.Data[idx];
+	AC2_SerialClass::IO tmpIO = AC2_Serial.device.Data[idx];
 
 	String tmpBuffer = "{ " +
 		BuildJSON("Name", tmpIO.Name) + ", " +
@@ -76,10 +55,10 @@ void getData()
 		BuildJSON("Invert", String(tmpIO.Invert)) +
 		"}";
 
-	AC2.webserver.send(200, "text/plain", tmpBuffer);
+	AC2_Serial.webserver.send(200, "text/plain", tmpBuffer);
 }
 
-void AC2Class::print(String message)
+void AC2_SerialClass::print(String message)
 {
 	if (bufferCount >= ACBufferSize)
 	{
@@ -90,11 +69,11 @@ void AC2Class::print(String message)
 	bufferCount++;
 }
 
-void AC2Class::println(String message)
+void AC2_SerialClass::println(String message)
 {
 	print(message + "<br>");
 }
-bool AC2Class::init(String name, IPAddress ip, IPAddress broadcastIP, int port, int TaskRateMS)
+bool AC2_SerialClass::init(String name, IPAddress ip, IPAddress broadcastIP, int port, int TaskRateMS)
 {
 	device.Name = name;
 	device.IP = ip;
@@ -103,8 +82,8 @@ bool AC2Class::init(String name, IPAddress ip, IPAddress broadcastIP, int port, 
 	taskRate = TaskRateMS;
 	SetupOTA();
 
-	//webserver.on("/", AC2Home);      //Which routine to handle at root location. This is display page
-	webserver.on("/AC2", AC2Index);      //Which routine to handle at root location. This is display page
+	//webserver.on("/", AC2_SerialHome);      //Which routine to handle at root location. This is display page
+	webserver.on("/AC2_Serial", AC2Index);      //Which routine to handle at root location. This is display page
 	webserver.on("/getData", getData);
 	webserver.on("/terminal", terminal);      //Which routine to handle at root location. This is display page
 	webserver.on("/handleTerminal", handleTerminal);
@@ -119,7 +98,7 @@ bool AC2Class::init(String name, IPAddress ip, IPAddress broadcastIP, int port, 
 }
 
 
-void AC2Class::task()
+void AC2_SerialClass::task()
 {
 
 	ArduinoOTA.handle();
@@ -138,7 +117,7 @@ void AC2Class::task()
 
 }
 
-void AC2Class::SetupOTA()
+void AC2_SerialClass::SetupOTA()
 {
 	// Port defaults to 8266
  // ArduinoOTA.setPort(8266);
@@ -195,7 +174,7 @@ void AC2Class::SetupOTA()
 	Serial.println(WiFi.localIP());
 }
 
-void AC2Class::HandleIO()
+void AC2_SerialClass::HandleIO()
 {
 	for (int i = 0; i < 16; i++)
 	{
@@ -235,7 +214,7 @@ void AC2Class::HandleIO()
 	}
 }
 
-void AC2Class::ReadMessages()
+void AC2_SerialClass::ReadMessages()
 {
 	int packetSize = Udp.parsePacket();
 	if (packetSize)
@@ -301,14 +280,14 @@ void AC2Class::ReadMessages()
 	}
 }
 
-void AC2Class::SendMessages()
+void AC2_SerialClass::SendMessages()
 {
 	Udp.beginPacket(device.BroadcastIP, device.Port);
 	Udp.print(device.Name + "," + device.Data[0].Value + "," + device.Data[1].Value);
 	Udp.endPacket();
 }
 
-void AC2Class::WriteIO(String DeviceName, IO io)
+void AC2_SerialClass::WriteIO(String DeviceName, IO io)
 {
 
 	if (Udp.beginPacket(device.BroadcastIP, device.Port) == 1)
@@ -327,12 +306,12 @@ void AC2Class::WriteIO(String DeviceName, IO io)
 
 }
 
-void AC2Class::LocalWriteIO(IO io)
+void AC2_SerialClass::LocalWriteIO(IO io)
 {
 	HandleWriteCommand(device.Name + ".Write(" + io.Name + ")%" + io.Value + "%{" + device.Name + "}");
 }
 
-int  AC2Class::LocalReadIO(String ioName)
+int  AC2_SerialClass::LocalReadIO(String ioName)
 {
 	for (int i = 0; i < 16; i++)
 	{
@@ -345,7 +324,7 @@ int  AC2Class::LocalReadIO(String ioName)
 	return 0;
 }
 
-void AC2Class::HandleWriteCommand(String command)
+void AC2_SerialClass::HandleWriteCommand(String command)
 {
 	int ioNameStart = command.indexOf("(", 0) + 1;
 	int ioNameEnd = command.indexOf(")", ioNameStart + 1);
@@ -368,104 +347,5 @@ void AC2Class::HandleWriteCommand(String command)
 	}
 }
 
-//void AC2Class::HandleWhoIs(String command)
-//{
-//    int ioNameStart = command.indexOf("(", 0) + 1;
-//    int ioNameEnd = command.indexOf(")", ioNameStart + 1);
-//    String ioName = command.substring(ioNameStart, ioNameEnd);
-//    //Serial.println(ioName);
-//    for (int i = 0; i < 16; i++)
-//    {
-//        if (ioName.equalsIgnoreCase(device.Data[i].Name))
-//        {
-//            Serial.print("Updating... Task Count: ");
-//            Serial.print(taskCount);
-//            Serial.print(", Name: ");
-//            Serial.print(device.Data[i].Name);
-//            Serial.print(", Timer: ");
-//            Serial.println(device.Data[i].DataTimer);
-//            int valueStart = command.indexOf("%", 0) + 1;
-//            int valueEnd = command.indexOf("%", valueStart);
-//            String value = command.substring(valueStart, valueEnd);
-//            //Serial.println(value);
-//            device.Data[i].Value = value.toInt();
-//            device.Data[i].DataTimer = device.Data[i].Timeout;
-//
-//            Serial.print("Updating... Task Count: ");
-//            Serial.print(taskCount);
-//            Serial.print(", Name: ");
-//            Serial.print(device.Data[i].Name);
-//            Serial.print(", Timer: ");
-//            Serial.println(device.Data[i].DataTimer);
-//        }
-//    }
-//}
-
-void AC2Class::HandleReplyCommand(String command)
-{
-	//int ioNameStart = command.indexOf("(", 0) + 1;
-	//int ioNameEnd = command.indexOf(")", ioNameStart + 1);
-	//String ioName = command.substring(ioNameStart, ioNameEnd);
-	//Serial.println(ioName);
-	//for (size_t i = 0; i < 16; i++)
-	//{
-	//   if (ioName.equalsIgnoreCase(device.Data[i].Name))
-	//   {
-	//      int valueStart = command.indexOf("%", 0) + 1;
-	//      int valueEnd = command.indexOf("%", valueStart);
-	//      String value = command.substring(valueStart, valueEnd);
-	//      Serial.println(value);
-	//      device.Data[i].Value = (uint8_t)value.toInt();
-	//      device.Data[i].Timeout = 60000;
-	//      pinMode(device.Data[i].Pin, OUTPUT);
-	//      digitalWrite(device.Data[i].Pin, device.Data[i].Value);
-	//   }
-	//}
-}
-
-void AC2Class::HandleReadCommand(String command)
-{
-	//int ioNameStart = command.indexOf("(", 0) + 1;
-	//int ioNameEnd = command.indexOf(")", ioNameStart + 1);
-	//String ioName = command.substring(ioNameStart, ioNameEnd);
-	//Serial.println(ioName);
-	//for (size_t i = 0; i < 16; i++)
-	//{
-	//   if (ioName.equalsIgnoreCase(device.Data[i].Name))
-	//   {
-	//      int valueStart = command.indexOf("%", 0) + 1;
-	//      int valueEnd = command.indexOf("%", valueStart);
-	//      String value = command.substring(valueStart, valueEnd);
-	//      Serial.println(value);
-	//      device.Data[i].Value = (uint8_t)value.toInt();
-	//      device.Data[i].Timeout = 60000;
-	//      pinMode(device.Data[i].Pin, OUTPUT);
-	//      digitalWrite(device.Data[i].Pin, device.Data[i].Value);
-	//   }
-	//}
-}
-
-void AC2Class::HandleConfigureCommand(String command)
-{
-	//int ioNameStart = command.indexOf("(", 0) + 1;
-	//int ioNameEnd = command.indexOf(")", ioNameStart + 1);
-	//String ioName = command.substring(ioNameStart, ioNameEnd);
-	//Serial.println(ioName);
-	//for (size_t i = 0; i < 16; i++)
-	//{
-	//   if (ioName.equalsIgnoreCase(device.Data[i].Name))
-	//   {
-	//      int valueStart = command.indexOf("%", 0) + 1;
-	//      int valueEnd = command.indexOf("%", valueStart);
-	//      String value = command.substring(valueStart, valueEnd);
-	//      Serial.println(value);
-	//      device.Data[i].Value = (uint8_t)value.toInt();
-	//      device.Data[i].Timeout = 60000;
-	//      pinMode(device.Data[i].Pin, OUTPUT);
-	//      digitalWrite(device.Data[i].Pin, device.Data[i].Value);
-	//   }
-	//}
-}
-
-AC2Class AC2;
+AC2_SerialClass AC2_Serial;
 

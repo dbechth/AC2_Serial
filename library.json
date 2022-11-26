@@ -1,7 +1,7 @@
 {
-    "name": "AC2",
+    "name": "AC2_Serial",
     "version": "0.0.1",
-    "description": "AC2 Library for Arduino, ESP8266 & EPS32",
+    "description": "AC2_Serial Library for Arduino, ESP8266 & EPS32",
     "keywords": "Communication",
     "authors":
     [
